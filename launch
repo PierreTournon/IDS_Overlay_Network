@@ -1,0 +1,11 @@
+#!/bin/bash
+
+nodes=$(wc -l < $1)
+mvn clean install
+mvn clean compile
+
+for i in $(seq 0 $nodes)
+do
+  echo Creation du noeud $i
+  xterm -T "Node $i" -e mvn exec:java -Dexec.args="$i" &
+done

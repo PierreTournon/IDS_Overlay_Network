@@ -28,8 +28,8 @@ public class Client {
         this.id = id;
         this.right = right;
         this.left = new ArrayList<>();
-        this.connection = factory.newConnection();;
-        this.channel = connection.createChannel();;
+        this.connection = factory.newConnection();
+        this.channel = connection.createChannel();
         queueName = channel.queueDeclare().getQueue();
 
         //Déclaration de l'exchange en routage direct
@@ -38,7 +38,7 @@ public class Client {
     }
 
 
-    public void receiveMessage() throws IOException, TimeoutException {
+    public void receiveMessage() throws IOException {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 Message message = SerializationUtils.deserialize(delivery.getBody());
                 message.popClients();
@@ -53,7 +53,7 @@ public class Client {
             channel.basicConsume(queueName, true, deliverCallback, consumerTag -> { });
         }
 
-
+    /*
     public void sendMessage(String str, ArrayList<Integer> path) throws IOException, TimeoutException {
             ArrayList<Integer> list_test = new ArrayList<Integer>();
             list_test.add(1);
@@ -63,7 +63,7 @@ public class Client {
             channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
             System.out.println("message envoyé "+str);
         }
-
+    */
 
 }
 

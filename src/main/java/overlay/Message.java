@@ -5,9 +5,9 @@ import java.util.ArrayList;
 
 public class Message implements Serializable {
     private String msg;
-    private ArrayList<Integer> clientsIds;
+    private ArrayList<String> clientsIds;
 
-    public Message(String msg, ArrayList<Integer> clientsIds){
+    public Message(String msg, ArrayList<String> clientsIds){
         this.msg = msg;
         this.clientsIds = clientsIds;
     }
@@ -16,15 +16,15 @@ public class Message implements Serializable {
         return msg;
     }
 
-    public ArrayList<Integer> getClientsIds() {
+    public ArrayList<String> getClientsIds() {
         return clientsIds;
     }
 
-    public Integer popClients(){
+    public String popClients(){
         return clientsIds.remove(0);
     }
 
     public String nextClient(){
-        return clientsIds.get(0).toString();
+        return clientsIds.get(0);
     }
 }
