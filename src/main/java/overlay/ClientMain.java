@@ -22,7 +22,11 @@ public class ClientMain {
         ArrayList <String> R = new ArrayList();
         R.add("2");
         R.add("3");
-        Client client = new Client(id,R);
+        ArrayList <String> L = new ArrayList();
+        L.add("3");
+        L.add("1");
+        Client client = new Client(id,R,L);
+
         System.out.println(id);
 
         try (Connection connection = factory.newConnection();
@@ -49,17 +53,25 @@ public class ClientMain {
             });
 
             //Partie send_rigt ou send_left du ring
-            System.out.println("Tapez r \"message\" ou l \"message\" pour envoyez un message à droite ou à gauche");
+            System.out.println("Tapez !r \"message\" ou !l \"message\" pour envoyez un message à droite ou à gauche");
             String msg = "";
             while(true) {
                 msg = stdIn.readLine();
-                if (msg.split(" ")[0].equals("r")){
-                    msg = msg.replaceFirst("r ", ""); // on enleve le r du message
+                if (msg.split(" ")[0].equals("!r")){
+                    msg = msg.replaceFirst("!r ", ""); // on enleve le !r du message
                     String nextNode = client.getFirstNodeRight();
-                    Message newMessage = new Message(msg, client.nextNodeRight());
+                    Message newMessage = new Message(msg, client.getRight());
                     byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
                     channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
-                    System.out.println("message envoyé : "+ msg);
+                    System.out.println("message envoyé à droite : "+ msg);
+                }
+                else if (msg.split(" ")[0].equals("!l")){
+                    msg = msg.replaceFirst("!l ", ""); // on enleve le !l du message
+                    String nextNode = client.getFirstNodeLeft();
+                    Message newMessage = new Message(msg, client.getLeft());
+                    byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
+                    channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
+                    System.out.println("message envoyé à gauche : "+ msg);
                 }
             }
         }
