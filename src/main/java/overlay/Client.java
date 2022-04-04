@@ -1,8 +1,5 @@
 package overlay;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -13,32 +10,40 @@ import java.util.concurrent.TimeoutException;
 
 
 public class Client {
-    private static final String EXCHANGE_NAME = "direct";
-    private Integer id;
-    private String queueName;
-    private Connection connection;
-    private Channel channel;
-    private List<Integer> right;
-    private List<Integer> left;
+    private String id;
+    private ArrayList<String> right;
+    private ArrayList<String> left;
 
-    public Client(Integer id,List<Integer> right) throws IOException, TimeoutException {
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
-
+    public Client(String id,ArrayList<String> right){
         this.id = id;
         this.right = right;
         this.left = new ArrayList<>();
-        this.connection = factory.newConnection();
-        this.channel = connection.createChannel();
-        queueName = channel.queueDeclare().getQueue();
 
-        //Déclaration de l'exchange en routage direct
-        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
-        channel.queueBind(queueName, EXCHANGE_NAME, id.toString());
     }
 
+    public String getId() {
+        return id;
+    }
 
-    public void receiveMessage() throws IOException {
+    public ArrayList<String> nextNodeLeft() {
+        //left.remove(0);
+        return left;
+    }
+
+    public ArrayList<String> nextNodeRight() {
+        //right.remove(0);
+        return right;
+    }
+
+    public String getFirstNodeLeft(){
+        return left.get(0);
+    }
+
+    public String getFirstNodeRight(){
+        return right.get(0);
+    }
+
+    /*public void receiveMessage() throws IOException {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 Message message = SerializationUtils.deserialize(delivery.getBody());
                 message.popClients();

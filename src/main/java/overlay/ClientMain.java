@@ -6,16 +6,25 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 import org.apache.commons.lang3.SerializationUtils;
 
-import java.time.LocalDateTime;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 public class ClientMain {
     private static final String EXCHANGE_NAME = "direct";
+    private static BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] argv) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         String id = argv[0];
+        //TEST
+        ArrayList <String> R = new ArrayList();
+        R.add("2");
+        R.add("3");
+        Client client = new Client(id,R);
         System.out.println(id);
+
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
 
@@ -29,7 +38,7 @@ public class ClientMain {
                 Message message = SerializationUtils.deserialize(delivery.getBody());
                 message.popClients();
                 if (message.getClientsIds().isEmpty()) {
-                    System.out.println(id + " a reçu :" + message.getMsg());
+                    System.out.println(id + " a reçu : " + message.getMsg());
                 } else {
                     Message newMessage = new Message(message.getMsg(), message.getClientsIds());
                     byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
@@ -39,21 +48,20 @@ public class ClientMain {
             channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
             });
 
-            System.out.println("Tapez /q pour quittez le chat");
+            //Partie send_rigt ou send_left du ring
+            System.out.println("Tapez r \"message\" ou l \"message\" pour envoyez un message à droite ou à gauche");
             String msg = "";
-            while (true);
-            /*
             while(true) {
-                Message newMessage = new Message(str, list_test);
-                byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
-                String nextNode = path.get(0).toString();
-                channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
-                System.out.println("message envoyé " + str);
-
-             */
-
+                msg = stdIn.readLine();
+                if (msg.split(" ")[0].equals("r")){
+                    msg = msg.replaceFirst("r ", ""); // on enleve le r du message
+                    String nextNode = client.getFirstNodeRight();
+                    Message newMessage = new Message(msg, client.nextNodeRight());
+                    byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
+                    channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
+                    System.out.println("message envoyé : "+ msg);
+                }
+            }
         }
-
-
     }
 }
