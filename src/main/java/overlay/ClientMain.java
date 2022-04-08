@@ -28,17 +28,16 @@ public class ClientMain {
         factory.setHost("localhost");
         String id = argv[0];
         Integer idInt = Integer.parseInt(id);
-        Integer linesNumber = 0;
+        ArrayList<Integer> nodesList = new ArrayList<>();
 
         //Gestion du graphe
         Path file = Path.of(argv[1]);
         try {
             for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                linesNumber+=1;
                 String[] parsedLine = line.split(" ");
                 List<Integer> list = new ArrayList<>();
                 for (String s : parsedLine) list.add(Integer.parseInt(s));
-
+                nodesList.add(list.get(0));
                 graph.put(list.get(0), list.subList(1, list.size())); //Construction du graphe.
             }
         } catch (IOException e) {
@@ -47,10 +46,23 @@ public class ClientMain {
 
         //Lancement de Dijkstra
         Dijkstra dijkstra = new Dijkstra(getGraph());
-        //noeud de droite = id du noeud+1 modulo(nombre de noeuds)
-        ArrayList<Integer> R = dijkstra.shortestPath(idInt, (idInt+1) % linesNumber);
-        //noeud de gauche = id du noeud-1 modulo(nombre de noeuds)
-        ArrayList<Integer> L  = dijkstra.shortestPath(idInt, (idInt-1) % linesNumber);
+        Integer indexNode = nodesList.indexOf(idInt);
+        ArrayList<Integer> R = new ArrayList<Integer>();
+        ArrayList<Integer> L = new ArrayList<Integer>();
+
+        //noeud de droite = id du noeud suivant modulo(nombre de noeuds)
+        if (indexNode.equals(nodesList.size()-1)){
+            R = dijkstra.shortestPath(idInt, (nodesList.get(0)));
+        } else {
+            R = dijkstra.shortestPath(idInt, (nodesList.get(nodesList.indexOf(idInt) + 1)));
+        }
+
+        //noeud de gauche = id du noeud precedant modulo(nombre de noeuds)
+        if (indexNode.equals(0)){
+            L  = dijkstra.shortestPath(idInt, nodesList.get(nodesList.size() - 1));
+        }else {
+            L = dijkstra.shortestPath(idInt, (nodesList.get(nodesList.indexOf(idInt) - 1)));
+        }
 
         ArrayList<String> RString = new ArrayList<String>();
         ArrayList<String> LString = new ArrayList<String>();
