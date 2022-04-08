@@ -20,8 +20,7 @@ public class Main {
             for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
                 String[] parsedLine = line.split(" ");
                 List<Integer> list = new ArrayList<>();
-                for(int i = 0; i < parsedLine.length; i++)
-                    list.add(Integer.parseInt(parsedLine[i]));
+                for (String s : parsedLine) list.add(Integer.parseInt(s));
 
                 graph.put(list.get(0), list.subList(1, list.size())); //Construction du graphe.
             }
@@ -39,7 +38,7 @@ public class Main {
         int id = 0;
         for(int e : graph.keySet()) {
             physToVirtu.put(e, String.valueOf(0));
-            i++;
+            id++;
         }
     }
 
