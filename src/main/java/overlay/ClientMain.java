@@ -28,7 +28,7 @@ public class ClientMain {
         factory.setHost("localhost");
         String id = argv[0];
         Integer idInt = Integer.parseInt(id);
-        ArrayList<Integer> nodesList = new ArrayList<>();
+        ArrayList<Integer> nodesList = new ArrayList<>();   //va contenir tous les noeuds du graphe
 
         //Gestion du graphe
         Path file = Path.of(argv[1]);
@@ -67,12 +67,14 @@ public class ClientMain {
         ArrayList<String> RString = new ArrayList<String>();
         ArrayList<String> LString = new ArrayList<String>();
 
-        for (Integer integer : R) { //creation des listes avec des strings
+        //creation des listes avec des strings
+        for (Integer integer : R) {
             RString.add(integer.toString());
         }
         for (Integer integer : L) {
             LString.add(integer.toString());
         }
+        //on instancie les donnes du client
         Client client = new Client(id, RString, LString);
         System.out.println("Node : "+id);
 
@@ -83,7 +85,6 @@ public class ClientMain {
             //Déclaration de l'exchange en routage direct
             channel.exchangeDeclare(EXCHANGE_NAME, "direct");
             channel.queueBind(queueName, EXCHANGE_NAME, id);
-
 
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 Message message = SerializationUtils.deserialize(delivery.getBody());
@@ -122,23 +123,11 @@ public class ClientMain {
                     channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
                     System.out.println("message envoyé à gauche : " + msg);
                 }
+                else {   //mauvaise saisie
+                    System.out.println("mauvaise saisie, ecrivez !r [message] ou !l [message]");
+                }
             }
         }
-    }
-
-    /**
-     * Création des IDs virtuelles associées aux IDs physiques.
-     */
-    private static void makeVirtualIds () {
-        int id = 0;
-        for(int e : graph.keySet()) {
-            physToVirtu.put(id,e);
-            id++;
-        }
-    }
-
-    public static Integer getVirtualId (Integer virtualId) {
-        return physToVirtu.get(virtualId);
     }
 
     public static Map<Integer, List<Integer>> getGraph () {
