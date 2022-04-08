@@ -47,8 +47,8 @@ public class ClientMain {
         //Lancement de Dijkstra
         Dijkstra dijkstra = new Dijkstra(getGraph());
         Integer indexNode = nodesList.indexOf(idInt);
-        ArrayList<Integer> R = new ArrayList<Integer>();
-        ArrayList<Integer> L = new ArrayList<Integer>();
+        ArrayList<Integer> R;
+        ArrayList<Integer> L;
 
         //noeud de droite = id du noeud suivant modulo(nombre de noeuds)
         if (indexNode.equals(nodesList.size()-1)){
