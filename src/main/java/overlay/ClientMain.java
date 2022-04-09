@@ -19,62 +19,62 @@ import java.util.Map;
 
 public class ClientMain {
     private static final String EXCHANGE_NAME = "direct";
-    private static BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+    private static final BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
     private static Map<Integer, List<Integer>> graph = new HashMap<>();
-    private static Map<Integer, Integer> physToVirtu = new HashMap<>();
 
     public static void main(String[] argv) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         String id = argv[0];
         Integer idInt = Integer.parseInt(id);
-        ArrayList<Integer> nodesList = new ArrayList<>();   //va contenir tous les noeuds du graphe
+        ArrayList<Integer> nodesList = new ArrayList<>(); //Va contenir tous les noeuds du graphe.
 
-        //Gestion du graphe
+        //Initialisation du graphe sous forme de HashMap à partir du fichier texte.
         Path file = Path.of(argv[1]);
         try {
             for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
                 String[] parsedLine = line.split(" ");
-                List<Integer> list = new ArrayList<>();
-                for (String s : parsedLine) list.add(Integer.parseInt(s));
-                nodesList.add(list.get(0));
-                graph.put(list.get(0), list.subList(1, list.size())); //Construction du graphe.
+                List<Integer> lineOfNodes = new ArrayList<>();
+                for (String s : parsedLine)
+                    lineOfNodes.add(Integer.parseInt(s));
+                nodesList.add(lineOfNodes.get(0));
+                graph.put(lineOfNodes.get(0), lineOfNodes.subList(1, lineOfNodes.size())); //Construction du graphe.
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         //Lancement de Dijkstra
-        Dijkstra dijkstra = new Dijkstra(getGraph());
+        Dijkstra dijkstra = new Dijkstra(graph);
         Integer indexNode = nodesList.indexOf(idInt);
         ArrayList<Integer> R;
         ArrayList<Integer> L;
 
-        //noeud de droite = id du noeud suivant modulo(nombre de noeuds)
-        if (indexNode.equals(nodesList.size()-1)){
+        //Noeud de droite = id du noeud suivant modulo(nombre de noeuds).
+        if (indexNode.equals(nodesList.size()-1))
             R = dijkstra.shortestPath(idInt, (nodesList.get(0)));
-        } else {
+        else
             R = dijkstra.shortestPath(idInt, (nodesList.get(nodesList.indexOf(idInt) + 1)));
-        }
 
-        //noeud de gauche = id du noeud precedant modulo(nombre de noeuds)
-        if (indexNode.equals(0)){
+
+        //Noeud de gauche = id du noeud precedant modulo(nombre de noeuds).
+        if (indexNode.equals(0))
             L  = dijkstra.shortestPath(idInt, nodesList.get(nodesList.size() - 1));
-        }else {
+        else
             L = dijkstra.shortestPath(idInt, (nodesList.get(nodesList.indexOf(idInt) - 1)));
-        }
 
-        ArrayList<String> RString = new ArrayList<String>();
-        ArrayList<String> LString = new ArrayList<String>();
 
-        //creation des listes avec des strings
-        for (Integer integer : R) {
+        ArrayList<String> RString = new ArrayList<>();
+        ArrayList<String> LString = new ArrayList<>();
+
+        //Transformation des listes d'IDs de type Int en listes d'IDs de type String.
+        for (Integer integer : R)
             RString.add(integer.toString());
-        }
-        for (Integer integer : L) {
+
+        for (Integer integer : L)
             LString.add(integer.toString());
-        }
-        //on instancie les donnes du client
+
+        //Instanciation des données du client.
         Client client = new Client(id, RString, LString);
         System.out.println("Node : "+id);
 
@@ -82,58 +82,54 @@ public class ClientMain {
              Channel channel = connection.createChannel()) {
 
             String queueName = channel.queueDeclare().getQueue();
-            //Déclaration de l'exchange en routage direct
+            //Déclaration de l'exchange en routage direct.
             channel.exchangeDeclare(EXCHANGE_NAME, "direct");
             channel.queueBind(queueName, EXCHANGE_NAME, id);
 
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 Message message = SerializationUtils.deserialize(delivery.getBody());
                 message.popClients();
-                if (message.getClientsIds().isEmpty()) {
+                if (message.getClientsIds().isEmpty())
                     System.out.println(id + " a reçu : " + message.getMsg());
-                } else {
+                else {
+                    System.out.println("Le message : \""+message.getMsg()+"\" est passé par là");
                     Message newMessage = new Message(message.getMsg(), message.getClientsIds());
                     byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
                     channel.basicPublish(EXCHANGE_NAME, message.nextClient(), null, newMessageBytes);
                 }
             };
-            channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
-            });
 
-            //Partie sendRigth ou sendLeft du ring
+            channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {});
+
+            //Partie sendRigth ou sendLeft du ring.
             System.out.println("Tapez !r \"message\" ou !l \"message\" pour envoyez un message à droite ou à gauche");
             String msg = "";
             while (true) {
                 msg = stdIn.readLine();
-                //sendRigth()
+                //Primitive sendRigth().
                 if (msg.split(" ")[0].equals("!r")) {
-                    msg = msg.replaceFirst("!r ", ""); // on enleve le !r du message
+                    msg = msg.replaceFirst("!r ", ""); //Suppression de "!r" du message.
                     String nextNode = client.getFirstNodeRight();
                     Message newMessage = new Message(msg, client.getRight());
                     byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
                     channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
                     System.out.println("message envoyé à droite : " + msg);
                 }
-                //sendLeft()
+                //Primitive sendLeft().
                 else if (msg.split(" ")[0].equals("!l")) {
-                    msg = msg.replaceFirst("!l ", ""); // on enleve le !l du message
+                    msg = msg.replaceFirst("!l ", ""); //Suppression du "!l" du message.
                     String nextNode = client.getFirstNodeLeft();
                     Message newMessage = new Message(msg, client.getLeft());
                     byte[] newMessageBytes = SerializationUtils.serialize(newMessage);
                     channel.basicPublish(EXCHANGE_NAME, nextNode, null, newMessageBytes);
                     System.out.println("message envoyé à gauche : " + msg);
                 }
-                else {   //mauvaise saisie
+                //Cas d'une mauvaise saisie.
+                else
                     System.out.println("mauvaise saisie, ecrivez !r [message] ou !l [message]");
-                }
             }
         }
     }
-
-    public static Map<Integer, List<Integer>> getGraph () {
-        return graph;
-    }
-
 }
 
 
