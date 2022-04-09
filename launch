@@ -1,0 +1,9 @@
+#!/bin/bash
+
+mvn clean install
+
+while IFS= read -r line; do
+    node=$(echo $line | sed 's/\s.*$//')
+    echo Creation du noeud $node
+    xterm -T "Node $node" -e mvn exec:java -Dexec.args="$node $1" &
+done < $1
